@@ -84,8 +84,8 @@ void TextureManager::DrawTexture(GLuint texture) {
 	glGenBuffers(1, &_vboID);
 	unsigned int x = 0;
 	unsigned int y = 0;
-	unsigned int width = 500;
-	unsigned int height = 500;
+	unsigned int width = 1000;
+	unsigned int height = 1000;
 
 	//This array will hold our vertex data.
 	//We need 6 vertices, and each vertex has 2
@@ -94,23 +94,23 @@ void TextureManager::DrawTexture(GLuint texture) {
 
 	//First Triangle
 	vertexData[0].setPosition(x + width, y + height);
-	vertexData[0].setUV(1.0f, 1.0f);
+	vertexData[0].setUV(1.0f, 0.0f);
 
 	vertexData[1].setPosition(x, y + height);
-	vertexData[1].setUV(0.0f, 1.0f);
+	vertexData[1].setUV(0.0f, 0.0f);
 
 	vertexData[2].setPosition(x, y);
-	vertexData[2].setUV(0.0f, 0.0f);
+	vertexData[2].setUV(0.0f, 1.0f);
 
 	//Second Triangle
 	vertexData[3].setPosition(x, y);
-	vertexData[3].setUV(0.0f, 0.0f);
+	vertexData[3].setUV(0.0f, 1.0f);
 
 	vertexData[4].setPosition(x + width, y);
-	vertexData[4].setUV(1.0f, 0.0f);
+	vertexData[4].setUV(1.0f, 1.0f);
 
 	vertexData[5].setPosition(x + width, y + height);
-	vertexData[5].setUV(1.0f, 1.0f);
+	vertexData[5].setUV(1.0f, 0.0f);
 
 	//Set all vertex colors to magenta
 	for (int i = 0; i < 6; i++) {

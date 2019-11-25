@@ -36,7 +36,11 @@ void Systems::drawSprites(SpriteBatch* batch) {
 		_program->use();
 		_lightEngine.Draw(&light, &transform);
 	}
-	glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
+	glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_ALPHA);
+	auto test = TextureManager::GetRenderTextures(750);
+	TextureManager::ClearTexture(test[0].first);
+	glBindFramebuffer(GL_FRAMEBUFFER, test[0].first);
+	TextureManager::DrawTexture(std::get<0>(TextureManager::LoadTexture("media/test.png")));
 	batch->begin(GlyphSortType::BACK_TO_FRONT);
 	_registry->group<Sprite>(entt::get<Transform>, entt::exclude<entt::tag<"Bright"_hs>>).each([batch](auto entity, auto& sprite, auto& transform) {
 		//TextureManager::Draw(sprite.texture, sprite.src, transform.rect, &transform.center, transform.angle, sprite.color);
@@ -56,6 +60,9 @@ void Systems::drawSprites(SpriteBatch* batch) {
 	});
 	batch->end();
 	batch->renderBatch();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
+	TextureManager::DrawTexture(test[0].second);
 	glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_ALPHA);
 	batch->begin(GlyphSortType::BACK_TO_FRONT);
 	_registry->group<>(entt::get<Sprite, Transform, entt::tag<"Bright"_hs>>).each([batch](auto entity, auto& sprite, auto& transform, auto tag) {

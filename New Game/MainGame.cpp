@@ -14,7 +14,7 @@
 
 static GLuint texLoc, camLoc;
 
-MainGame::MainGame() : _screenWidth(500), _screenHeight(500), _gameDims(1000, 1000),
+MainGame::MainGame() : _screenWidth(750), _screenHeight(750), _gameDims(1000, 1000),
 _gameState(GameState::PLAY), _fpsLimiter(200.0f), _fps(120.0f), _frameTime(0),
 _events(&_registry), _systems(&_registry, &_events, &_inputManager) {}
 
@@ -24,6 +24,9 @@ MainGame::~MainGame() {
 void MainGame::run() {
 	initSystems();
 	AssetManager::createPlayer();
+	for (int i = 0; i < 10; i++) {
+		AssetManager::createAsteroid(glm::vec2(0, 0), glm::vec2(100, 150));
+	}
 	gameLoop();
 }
 
