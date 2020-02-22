@@ -41,3 +41,4 @@
 *.txt
 *.ipdb
 *.iobj
+/New Game/x64/Debug/main.new.obj.enc

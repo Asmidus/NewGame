@@ -13,5 +13,5 @@ namespace TextureManager {
 	std::vector<std::pair<GLuint, GLuint>> GetRenderTextures(unsigned int size);
 	void DrawTexture(GLuint texture);
 	void ClearTexture(GLuint fbo);
-	SDL_Texture* LoadText(const char* text, TTF_Font* font, SDL_Color color);
+	GLuint LoadText(const char* text, TTF_Font* font, SDL_Color color);
 }

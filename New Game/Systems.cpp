@@ -20,25 +20,26 @@
 void Systems::drawSprites(SpriteBatch* batch) {
 	updateAnimations();
 	//render lights
-	for (auto& entity : _registry->group<Light>(entt::get<Transform>)) {
-		auto [light, transform] = _registry->get<Light, Transform>(entity);
-		_program->unuse();
-		_lightEngine.Begin(light, transform);
-		//TODO draw occluders ONCE and then translate the image for each light so we only draw occluders twice as opposed to
-		//once per light and once again in the loop below  (this assumes a constant shadow resolution across light sizes)
-		for (auto& entity : _registry->view<entt::tag<"Occluder"_hs>>()) {
-			auto [sprite, pt] = _registry->get<Sprite, Transform>(entity);
-			_lightEngine.DrawHull(&light, &transform, &sprite, &pt);
-		}
-		_lightEngine.End();
-		_lightEngine.CreateShadows(&light);
-		_camera->view();
-		_program->use();
-		_lightEngine.Draw(&light, &transform);
-	}
-	glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
+	//for (auto& entity : _registry->group<Light>(entt::get<Transform>)) {
+	//	auto [light, transform] = _registry->get<Light, Transform>(entity);
+	//	_program->unuse();
+	//	_lightEngine.Begin(light, transform);
+	//	//TODO draw occluders ONCE and then translate the image for each light so we only draw occluders twice as opposed to
+	//	//once per light and once again in the loop below  (this assumes a constant shadow resolution across light sizes)
+	//	for (auto& entity : _registry->view<entt::tag<"Occluder"_hs>>()) {
+	//		auto [sprite, pt] = _registry->get<Sprite, Transform>(entity);
+	//		_lightEngine.DrawHull(&light, &transform, &sprite, &pt);
+	//	}
+	//	_lightEngine.End();
+	//	_lightEngine.CreateShadows(&light);
+	//	_camera->view();
+	//	_program->use();
+	//	_lightEngine.Draw(&light, &transform);
+	//}
+	//glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
+
 	batch->begin(GlyphSortType::BACK_TO_FRONT);
-	_registry->group<Sprite>(entt::get<Transform>, entt::exclude<entt::tag<"Bright"_hs>>).each([batch](auto entity, auto& sprite, auto& transform) {
+	_registry->group<Sprite>(entt::get<Transform>/*, entt::exclude<entt::tag<"Bright"_hs>>*/).each([=](auto entity, auto& sprite, auto& transform) {
 		//TextureManager::Draw(sprite.texture, sprite.src, transform.rect, &transform.center, transform.angle, sprite.color);
 		glm::vec4 t = glm::vec4(transform.rect.x, transform.rect.y, transform.rect.w, transform.rect.h);
 		glm::vec4 u = sprite.getUV();
@@ -47,35 +48,40 @@ void Systems::drawSprites(SpriteBatch* batch) {
 		} else {
 			batch->draw(t, u, sprite.texture, transform.z, sprite.color);
 		}
-		//auto text = _registry->try_get<Text>(entity);
-		//if (text) {
-		//	text->dest.x = transform.rect.x + text->offset.x;
-		//	text->dest.y = transform.rect.y + text->offset.y;
-		//	TextureManager::DrawText(text->texture, text->dest);
-		//}
-	});
-	batch->end();
-	batch->renderBatch();
-	glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_ALPHA);
-	batch->begin(GlyphSortType::BACK_TO_FRONT);
-	_registry->group<>(entt::get<Sprite, Transform, entt::tag<"Bright"_hs>>).each([batch](auto entity, auto& sprite, auto& transform, auto tag) {
-		//TextureManager::Draw(sprite.texture, sprite.src, transform.rect, &transform.center, transform.angle, sprite.color);
-		glm::vec4 t = glm::vec4(transform.rect.x, transform.rect.y, transform.rect.w, transform.rect.h);
-		glm::vec4 u = sprite.getUV();
-		if (transform.angle) {
-			batch->draw(t, u, sprite.texture, transform.z, sprite.color, transform.angle, transform.center);
-		} else {
-			batch->draw(t, u, sprite.texture, transform.z, sprite.color);
+		auto text = _registry->try_get<Text>(entity);
+		if (text) {
+			text->dest.x = transform.rect.x + text->offset.x;
+			text->dest.y = transform.rect.y + text->offset.y;
+			t = glm::vec4(text->dest.x, text->dest.y, text->dest.w, text->dest.h);
+			u = glm::vec4(0, 0, 1, 1);
+			batch->draw(t, u, text->texture, transform.z);
+			//TextureManager::DrawText(text->texture, text->dest);
 		}
-		//auto text = _registry->try_get<Text>(entity);
-		//if (text) {
-		//	text->dest.x = transform.rect.x + text->offset.x;
-		//	text->dest.y = transform.rect.y + text->offset.y;
-		//	TextureManager::DrawText(text->texture, text->dest);
-		//}
 	});
 	batch->end();
 	batch->renderBatch();
+
+	//glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_ALPHA);
+	//batch->begin(GlyphSortType::BACK_TO_FRONT);
+	//_registry->group<>(entt::get<Sprite, Transform, entt::tag<"Bright"_hs>>).each([batch](auto entity, auto& sprite, auto& transform, auto tag) {
+	//	//TextureManager::Draw(sprite.texture, sprite.src, transform.rect, &transform.center, transform.angle, sprite.color);
+	//	glm::vec4 t = glm::vec4(transform.rect.x, transform.rect.y, transform.rect.w, transform.rect.h);
+	//	glm::vec4 u = sprite.getUV();
+	//	if (transform.angle) {
+	//		batch->draw(t, u, sprite.texture, transform.z, sprite.color, transform.angle, transform.center);
+	//	} else {
+	//		batch->draw(t, u, sprite.texture, transform.z, sprite.color);
+	//	}
+	//	//auto text = _registry->try_get<Text>(entity);
+	//	//if (text) {
+	//	//	text->dest.x = transform.rect.x + text->offset.x;
+	//	//	text->dest.y = transform.rect.y + text->offset.y;
+	//	//	TextureManager::DrawText(text->texture, text->dest);
+	//	//}
+	//});
+	//batch->end();
+	//batch->renderBatch();
+
 	//_registry->group<>(entt::get<Text>, entt::exclude<Transform>).each(
 	//	[this](auto entity, auto& text) {
 	//		TextureManager::DrawText(text.texture, text.dest);

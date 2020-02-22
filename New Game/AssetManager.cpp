@@ -33,10 +33,10 @@ entt::entity AssetManager::createPlayer() {
 	Cooldown* cool = &(_registry->assign<Cooldown>(entity, cooldowns));
 	_registry->assign<Animation>(entity, 5, 0.08, false);
 	_registry->assign<Health>(entity, 5.0f);
-	_registry->assign<Collider>(entity, shipSize/2.25);
+	_registry->assign<Collider>(entity, shipSize/2);
 	_registry->assign<entt::tag<"Player"_hs>>(entity);
-	_registry->assign<entt::tag<"Occluder"_hs>>(entity);
-	_registry->assign<entt::tag<"Bright"_hs>>(entity);
+	//_registry->assign<entt::tag<"Occluder"_hs>>(entity);
+	//_registry->assign<entt::tag<"Bright"_hs>>(entity);
 	keyMap[SDLK_w] = [entity](bool pressed) {
 		auto& velocity = _registry->get<Velocity>(entity);
 		auto& animation = _registry->get<Animation>(entity);
@@ -96,14 +96,15 @@ entt::entity AssetManager::createBullet(const entt::entity& shooter) {
 	float rotatedY = sin(angle) * (point.x - center.x) + cos(angle) * (point.y - center.y) + center.y + shooterTransform.rect.y - bulletSize/2;
 	_registry->assign<Velocity>(entity, _registry->get<Velocity>(shooter).direction, 0.0f);
 	_registry->assign<Transform>(entity, rotatedX, rotatedY, bulletSize, bulletSize, 1);
-	_registry->assign<Sprite>(entity, "media/Projectile.png", 50, 50, glm::vec3(0, 255, 0));
-	//_registry->assign<Lifetime>(entity, 3);
-	_registry->assign<Collider>(entity, bulletSize/2);
-	//float size = 1000 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2000 - 1000.0f)));
 	float r = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
 	float g = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
 	float b = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
-	_registry->assign<Light>(entity, glm::vec3(255, 255, 255), 2.0f);
+	_registry->assign<Sprite>(entity, "media/Projectile.png", 50, 50, glm::vec3(255*r, 255*g, 255*b));
+	//_registry->assign<Lifetime>(entity, 3);
+	_registry->assign<Collider>(entity, bulletSize/2);
+	_registry->assign<entt::tag<"Bright"_hs>>(entity);
+	//float size = 1000 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2000 - 1000.0f)));
+	_registry->assign<Light>(entity, glm::vec3(r, g, b), 4.0f);
 	_registry->assign<entt::tag<"Player"_hs>>(entity);
 	return entity;
 }
@@ -165,7 +166,7 @@ entt::entity AssetManager::createButton(Event::Type type, const char* text) {
 	_registry->assign<Transform>(entity, 0, 0, 160, 100, 0);
 	_registry->assign<MouseListener>(entity, mouseMap);
 	_registry->assign<entt::tag<"Bright"_hs>>(entity);
-	//_registry->assign<Text>(entity, text, 160, 100, 24, SDL_Color({ 25, 25, 25, 255 }));
+	_registry->assign<Text>(entity, text, 160, 100, 32, Color(glm::vec4({ 255, 255, 255, 255 })));
 	return entity;
 }
 

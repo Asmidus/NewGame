@@ -154,9 +154,30 @@ void TextureManager::ClearTexture(GLuint fbo) {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-SDL_Texture* TextureManager::LoadText(const char* text, TTF_Font* font, SDL_Color color) {
+GLuint TextureManager::LoadText(const char* text, TTF_Font* font, SDL_Color color) {
+	GLuint id = 0;
 	auto texSurface = TTF_RenderText_Blended(font, text, color);
 	//auto tex = SDL_CreateTextureFromSurface(_renderer, texSurface);
+	glGenTextures(1, &id);
+	glBindTexture(GL_TEXTURE_2D, id);
+	//int Mode = GL_RGB;
+
+	//if (texSurface->format->BytesPerPixel == 4) {
+	//	Mode = GL_RGBA8;
+	//}
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texSurface->w, texSurface->h, 0, GL_BGRA, GL_UNSIGNED_BYTE, texSurface->pixels);
+
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	//Set some texture parameters
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
 	SDL_FreeSurface(texSurface);
-	return nullptr;
+	return id;
 }

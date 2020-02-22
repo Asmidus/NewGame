@@ -61,7 +61,7 @@ public:
 	void end();
 
 	// Adds a glyph to the sprite batch
-	void draw(const glm::vec4& destRect, const glm::vec4& uvRect, GLuint texture, float depth, const Color& color);
+	void draw(const glm::vec4& destRect, const glm::vec4& uvRect, GLuint texture, float depth, const Color& color = Color(glm::vec3(255, 255, 255)));
 	// Adds a glyph to the sprite batch with rotation
 	void draw(const glm::vec4& destRect, const glm::vec4& uvRect, GLuint texture, float depth, const Color& color, float angle, const glm::vec2& center = { 0.5, 0.5 });
 	// Adds a glyph to the sprite batch with rotation
