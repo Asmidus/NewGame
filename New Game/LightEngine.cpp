@@ -73,7 +73,7 @@ void LightEngine::Begin(const Light& light,  const Transform& transform) {
 	x = cos(angle) * (point.x - center.x) - sin(angle) * (point.y - center.y) + center.x;
 	y = sin(angle) * (point.x - center.x) + cos(angle) * (point.y - center.y) + center.y;
 	_camera.setPosition(glm::vec2(x,
-								  size - y));
+								  y));
 	_camera.update();
 	_camera.view();
 	auto& matrix = _camera.getCameraMatrix();
@@ -99,7 +99,7 @@ glm::vec2 rotatePoint(const glm::vec2& pos, float angle) {
 }
 
 void LightEngine::DrawHull(Light* light, Transform* lightTransform, Sprite* sprite, Transform* transform) {
-	glm::vec4 t = glm::vec4(transform->rect.x, light->resolution - transform->rect.y - transform->rect.h, transform->rect.w, transform->rect.h);
+	glm::vec4 t = glm::vec4(transform->rect.x, transform->rect.y, transform->rect.w, transform->rect.h);
 	glm::vec4 u = sprite->getUV();
 	if (transform->angle) {
 		_batch.draw(t, u, sprite->texture, transform->z, sprite->color, -transform->angle, transform->center);
@@ -118,17 +118,17 @@ void LightEngine::Draw(GLuint& fbo, Light* light, GLuint texture) {
 	int x = 0, y = 0;
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	vertexData[0].setPosition(x + width, y + height);
-	vertexData[0].setUV(1.0f, 0.0f);
+	vertexData[0].setUV(1.0f, 1.0f);
 	vertexData[1].setPosition(x, y + height);
-	vertexData[1].setUV(0.0f, 0.0f);
+	vertexData[1].setUV(0.0f, 1.0f);
 	vertexData[2].setPosition(x, y);
-	vertexData[2].setUV(0.0f, 1.0f);
+	vertexData[2].setUV(0.0f, 0.0f);
 	vertexData[3].setPosition(x, y);
-	vertexData[3].setUV(0.0f, 1.0f);
+	vertexData[3].setUV(0.0f, 0.0f);
 	vertexData[4].setPosition(x + width, y);
-	vertexData[4].setUV(1.0f, 1.0f);
+	vertexData[4].setUV(1.0f, 0.0f);
 	vertexData[5].setPosition(x + width, y + height);
-	vertexData[5].setUV(1.0f, 0.0f);
+	vertexData[5].setUV(1.0f, 1.0f);
 	glBindBuffer(GL_ARRAY_BUFFER, _vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW);
 	glBindTexture(GL_TEXTURE_2D, texture);
@@ -173,6 +173,7 @@ void LightEngine::Draw(Light* light, Transform* lightTransform) {
 	vertexData[5].setPosition(x + dim, y + dim);
 	vertexData[5].setUV(1.0f, 1.0f);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	//glBlendFunc(GL_DST_COLOR, GL_DST_ALPHA);
 	glBindBuffer(GL_ARRAY_BUFFER, _vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW);
 	glBindTexture(GL_TEXTURE_2D, light->shadowTex);

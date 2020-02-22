@@ -104,7 +104,7 @@ void EventManager::processCollision(Event& event) {
 		dir = glm::vec2(rand()%200-100, rand()%200-100);
 	}
 	auto speed = glm::length(v2.currVel);
-	float depth = c1.radius + c2.radius - glm::length(dir) + 0.5;
+	float depth = c1.radius + c2.radius - glm::length(dir);
 	if (e1Pos == e2Pos) {
 		depth += 1;
 	}
@@ -120,14 +120,14 @@ void EventManager::processCollision(Event& event) {
 		t2.rect.x -= displace.x;
 		t2.rect.y -= displace.y;
 	}
-	if (_registry->has<entt::tag<"Player"_hs>>(p) && !_registry->has<entt::tag<"Player"_hs>>(e)) {
-		if (_registry->has<entt::tag<"Split"_hs>>(e)) {
-			for (int i = 0; i < rand() % 2 + 2; i++) {
-				AssetManager::createAsteroid(&e);
-			}
-		}
-		_registry->destroy(e);
-	}
+	//if (_registry->has<entt::tag<"Player"_hs>>(p) && !_registry->has<entt::tag<"Player"_hs>>(e)) {
+	//	if (_registry->has<entt::tag<"Split"_hs>>(e)) {
+	//		for (int i = 0; i < rand() % 2 + 2; i++) {
+	//			AssetManager::createAsteroid(&e);
+	//		}
+	//	}
+	//	_registry->destroy(e);
+	//}
 }
 
 void EventManager::processMove(Event& event) {

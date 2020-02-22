@@ -116,15 +116,15 @@ entt::entity AssetManager::createAsteroid(glm::vec2 speedRange, glm::vec2 sizeRa
 		xDir = rand() % 200 - 100;
 		yDir = rand() % 200 - 100;
 	}
-	bool topSpawn = rand() % 2;
+	//bool topSpawn = rand() % 2;
 	float x, y;
-	if (topSpawn) {
-		x = rand() % int(*_gameWidth);
-		y = -99 + rand() % 2 * (*_gameHeight + 99);
-	} else {
-		x = -99 + rand() % 2 * (*_gameWidth + 99);
-		y = rand() % int(*_gameHeight);
-	}
+	//if (topSpawn) {
+	x = rand() % int(*_gameWidth);
+	//y = -99 + rand() % 2 * (*_gameHeight + 99);
+	//} else {
+		//x = -99 + rand() % 2 * (*_gameWidth + 99);
+	y = rand() % int(*_gameHeight);
+	//}
 	float speed = speedRange.x + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (speedRange.y - speedRange.x)));
 	float size = sizeRange.x + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (sizeRange.y - sizeRange.x)));
 	_registry->assign<Velocity>(entity, glm::vec2(xDir, yDir), speed);
@@ -133,7 +133,7 @@ entt::entity AssetManager::createAsteroid(glm::vec2 speedRange, glm::vec2 sizeRa
 	_registry->assign<Collider>(entity, size / 2);
 	_registry->assign<Sprite>(entity, "media/Projectile.png", 50, 50, glm::vec3(150, 75, 0));
 	_registry->assign<entt::tag<"Enemy"_hs>>(entity);
-	//_registry->assign<entt::tag<"Occluder"_hs>>(entity);
+	_registry->assign<entt::tag<"Occluder"_hs>>(entity);
 	return entity;
 }
 
