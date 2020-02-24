@@ -92,22 +92,23 @@ SpriteBatch::~SpriteBatch() {}
 
 void SpriteBatch::init() {
 	createVertexArray();
+	static int maxBatchSize = 1000000 * 3 / sizeof(Vertex); //Cap of 3mb
+	_vertices.resize(maxBatchSize);
 }
 
 void SpriteBatch::dispose() {
-	if (_vao != 0) {
-		glDeleteVertexArrays(1, &_vao);
-		_vao = 0;
+	for(auto& vao : _vao) {
+		glDeleteVertexArrays(1, &vao);
 	}
-	if (_vbo != 0) {
-		glDeleteBuffers(1, &_vbo);
-		_vbo = 0;
+	for(auto& vbo : _vbo) {
+		glDeleteBuffers(1, &vbo);
 	}
 }
 
 void SpriteBatch::begin(GlyphSortType sortType /* GlyphSortType::TEXTURE */) {
 	_sortType = sortType;
 	_renderBatches.clear();
+	currVBO = 0;
 
 	// Makes _glpyhs.size() == 0, however it does not free internal memory.
 	// So when we later call emplace_back it doesn't need to internally call new.
@@ -148,90 +149,104 @@ void SpriteBatch::renderBatch() {
 
 	// Bind our VAO. This sets up the opengl state we need, including the 
 	// vertex attribute pointers and it binds the VBO
-	glBindVertexArray(_vao);
-
+	int currVAO = 0;
 	for (size_t i = 0; i < _renderBatches.size(); i++) {
+		if (_renderBatches[i].offset == 0) {
+			glBindVertexArray(0);
+			glBindVertexArray(_vao[currVAO++]);
+		}
 		glBindTexture(GL_TEXTURE_2D, _renderBatches[i].texture);
 
 		glDrawArrays(GL_TRIANGLES, _renderBatches[i].offset, _renderBatches[i].numVertices);
 	}
-
 	glBindVertexArray(0);
+
+}
+
+void SpriteBatch::renderCurrentBatch(int numVertices) {
+	if (currVBO >= _vao.size()) {
+		createVertexArray();
+	}
+
+	// Bind our VBO
+	glBindBuffer(GL_ARRAY_BUFFER, _vbo[currVBO++]);
+	// Orphan the buffer (for speed)
+	glBufferData(GL_ARRAY_BUFFER, numVertices * sizeof(Vertex), 0, GL_DYNAMIC_DRAW);
+	// Upload the data
+	glBufferSubData(GL_ARRAY_BUFFER, 0, numVertices * sizeof(Vertex), _vertices.data());
+
+	// Unbind the VBO
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	// Bind our VAO. This sets up the opengl state we need, including the 
+	// vertex attribute pointers and it binds the VBO
+	//glBindVertexArray(_vao.back());
+
+	//glBindTexture(GL_TEXTURE_2D, _renderBatches[0].texture);
+
+	//glDrawArrays(GL_TRIANGLES, 0, _renderBatches[0].numVertices);
+
+	//glBindVertexArray(0);
 }
 
 void SpriteBatch::createRenderBatches() {
 	// This will store all the vertices that we need to upload
 	// Resize the buffer to the exact size we need so we can treat
 	// it like an array
+	static int maxBatchSize = 1000000 * 0.24 / sizeof(Vertex); //Cap of 1.2mb
 	unsigned int numVertices = 6*_glyphPointers.size();
-	if (_vertices.size() < numVertices) {
-		_vertices.resize(numVertices);
-	}
 
 	if (_glyphPointers.empty()) {
 		return;
 	}
 
-	int offset = 0; // current offset
-	int cv = 0; // current vertex
+	size_t cg = 0;
+	while (cg < _glyphPointers.size()) {
+		int cv = 0; // current vertex
+		int offset = 0; // current offset
 
-	//Add the first batch
-	_renderBatches.emplace_back(offset, 6, _glyphPointers[0]->texture);
-	_vertices[cv++] = _glyphPointers[0]->topLeft;
-	_vertices[cv++] = _glyphPointers[0]->bottomLeft;
-	_vertices[cv++] = _glyphPointers[0]->bottomRight;
-	_vertices[cv++] = _glyphPointers[0]->bottomRight;
-	_vertices[cv++] = _glyphPointers[0]->topRight;
-	_vertices[cv++] = _glyphPointers[0]->topLeft;
-	offset++;
-
-	//Add all the rest of the glyphs
-	for (size_t cg = 1; cg < _glyphPointers.size(); cg++) {
-
-		// Check if this glyph can be part of the current batch
-		if (_glyphPointers[cg]->texture != _glyphPointers[cg - 1]->texture) {
-			// Make a new batch
-			_renderBatches.emplace_back(6*offset, 6, _glyphPointers[cg]->texture);
-		} else {
-			// If its part of the current batch, just increase numVertices
-			_renderBatches.back().numVertices += 6;
-		}
+		//Add the first batch
+		_renderBatches.emplace_back(offset, 6, _glyphPointers[cg]->texture);
 		_vertices[cv++] = _glyphPointers[cg]->topLeft;
 		_vertices[cv++] = _glyphPointers[cg]->bottomLeft;
 		_vertices[cv++] = _glyphPointers[cg]->bottomRight;
 		_vertices[cv++] = _glyphPointers[cg]->bottomRight;
 		_vertices[cv++] = _glyphPointers[cg]->topRight;
-		_vertices[cv++] = _glyphPointers[cg]->topLeft;
+		_vertices[cv++] = _glyphPointers[cg++]->topLeft;
 		offset++;
+
+		//Add all the rest of the glyphs
+		while (cg < _glyphPointers.size() and cv < maxBatchSize) {
+
+			// Check if this glyph can be part of the current batch
+			if (_glyphPointers[cg]->texture != _glyphPointers[cg - 1]->texture) {
+				// Make a new batch
+				_renderBatches.emplace_back(6 * offset, 6, _glyphPointers[cg]->texture);
+			} else {
+				// If its part of the current batch, just increase numVertices
+				_renderBatches.back().numVertices += 6;
+			}
+			_vertices[cv++] = _glyphPointers[cg]->topLeft;
+			_vertices[cv++] = _glyphPointers[cg]->bottomLeft;
+			_vertices[cv++] = _glyphPointers[cg]->bottomRight;
+			_vertices[cv++] = _glyphPointers[cg]->bottomRight;
+			_vertices[cv++] = _glyphPointers[cg]->topRight;
+			_vertices[cv++] = _glyphPointers[cg++]->topLeft;
+			offset++;
+		}
+		renderCurrentBatch(cv);
 	}
-
-	// Bind our VBO
-	glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-	// Orphan the buffer (for speed)
-	glBufferData(GL_ARRAY_BUFFER, numVertices * sizeof(Vertex), _vertices.data(), GL_STREAM_DRAW);
-	// Upload the data
-	//glBufferSubData(GL_ARRAY_BUFFER, 0, _glyphPointers.size()*6 * sizeof(Vertex), _vertices.data());
-
-	// Unbind the VBO
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
 }
 
 void SpriteBatch::createVertexArray() {
 
-	// Generate the VAO if it isn't already generated
-	if (_vao == 0) {
-		glGenVertexArrays(1, &_vao);
-	}
-
 	// Bind the VAO. All subsequent opengl calls will modify it's state.
-	glBindVertexArray(_vao);
+	_vao.push_back(0);
+	glGenVertexArrays(1, &_vao.back());
+	glBindVertexArray(_vao.back());
 
-	//Generate the VBO if it isn't already generated
-	if (_vbo == 0) {
-		glGenBuffers(1, &_vbo);
-	}
-	glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+	_vbo.push_back(0);
+	glGenBuffers(1, &_vbo.back());
+	glBindBuffer(GL_ARRAY_BUFFER, _vbo.back());
 
 	//Tell opengl what attribute arrays we need
 	glEnableVertexAttribArray(0);
@@ -246,7 +261,7 @@ void SpriteBatch::createVertexArray() {
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, uv));
 
 	glBindVertexArray(0);
-
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void SpriteBatch::sortGlyphs() {

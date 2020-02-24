@@ -70,6 +70,8 @@ public:
 	// Renders the entire SpriteBatch to the screen
 	void renderBatch();
 
+	void renderCurrentBatch(int numVertices);
+
 private:
 	// Creates all the needed RenderBatches
 	void createRenderBatches();
@@ -86,8 +88,10 @@ private:
 	static bool compareTexture(Glyph* a, Glyph* b);
 	static bool compareBTFTexture(Glyph* a, Glyph* b);
 
-	GLuint _vbo;
-	GLuint _vao;
+	std::vector<GLuint> _vbo;
+	GLuint currVBO;
+	std::vector<GLuint> _vao;
+	//GLuint _vao, _vbo;
 
 	GlyphSortType _sortType;
 

@@ -71,7 +71,7 @@ void MainGame::gameLoop() {
 		if (_events.processEvents(1 / _fps)) {
 			break;
 		}
-		_systems.checkCollisions();
+		//_systems.checkCollisions();
 		static unsigned int loop = 0;
 		if (loop % 10 == 0) {
 			loop = 1;

@@ -17,5 +17,5 @@ void main() {
 	//you simply do (cos(x) + 1.0) * 0.5
 	vec4 textureColor = texture(mySampler, fragmentUV);
 	//Make crazy colors using time and position!
-	color =  fragmentColor * textureColor;
+	color =  fragmentColor * textureColor * 1.25;
 }
