@@ -1,19 +1,15 @@
-#include "AssetManager.h"
 #include <SDL.h>
+#include <iostream>
 #include "AssetManager.h"
 #include "Components.h"
-#include <iostream>
+#include "Global.h"
 
 
 
 static entt::registry* _registry = nullptr;
-static float* _gameWidth;
-static float* _gameHeight;
 
-void AssetManager::init(entt::registry* r, glm::vec2& gameDims) {
+void AssetManager::init(entt::registry* r) {
 	_registry = r;
-	_gameWidth = &gameDims.x;
-	_gameHeight = &gameDims.y;
 }
 
 entt::entity AssetManager::createPlayer() {
@@ -23,10 +19,10 @@ entt::entity AssetManager::createPlayer() {
 	std::unordered_map<Event::Type, float> cooldowns;
 	cooldowns[Event::Type::shootBullet] = 0.005f;
 	//cooldowns[Event::Type::collision] = 1.5f;
-	Velocity* vel = &(_registry->assign<Velocity>(entity, glm::vec2(0, 0), 30, 3));
+	Velocity* vel = &(_registry->assign<Velocity>(entity, glm::vec2(0, 0), 30, 2));
 	_registry->assign<Sprite>(entity, "media/ECSplayer.png", 50, 50);
 	_registry->assign<Transform>(entity,
-								 *_gameWidth/2 - shipSize/2, *_gameHeight/2 - shipSize/2,	//pos
+								 Global::gameWidth/2 - shipSize/2, Global::gameHeight/2 - shipSize/2,	//pos
 								 shipSize, shipSize,										//size
 								 0,															//z level
 								 0.4f, 0.5f);												//center
@@ -77,8 +73,9 @@ entt::entity AssetManager::createPlayer() {
 	};
 	keyMap[SDLK_SPACE] = [entity, cool](bool pressed) {
 		if (pressed && cool->trigger(Event::shootBullet)) {
-			//for(int i = 0;i < 100;i++)
-				createBullet(entity);
+			//for(int i = 0;i < 500;i++)
+				//createBullet(entity);
+			createBasicEnemy();
 		}
 		return true;
 	};
@@ -87,7 +84,30 @@ entt::entity AssetManager::createPlayer() {
 	//hacky background for lights to render on
 	//auto entity2 = _registry->create();
 	//_registry->assign<Sprite>(entity2, "media/Button.png", 160, 100, glm::vec3(10, 10, 10));
-	//_registry->assign<Transform>(entity2, 0, 0, *_gameWidth, *_gameHeight, 3);
+	//_registry->assign<Transform>(entity2, 0, 0, Global::gameWidth, Global::gameHeight, 3);
+	return entity;
+}
+
+entt::entity AssetManager::createBasicEnemy() {
+	auto entity = _registry->create();
+	static unsigned int shipSize = 30;
+	std::unordered_map<Event::Type, float> cooldowns;
+	//cooldowns[Event::Type::shootBullet] = 0.005f;
+	//cooldowns[Event::Type::collision] = 1.5f;
+	Velocity* vel = &(_registry->assign<Velocity>(entity, glm::vec2(-1, 0), 10, 5, 0));
+	float r = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
+
+	_registry->assign<Sprite>(entity, "media/Projectile.png", 50, 50);
+	_registry->assign<Transform>(entity,
+								 Global::gameWidth, Global::gameHeight * r,	//pos
+								 shipSize, shipSize,										//size
+								 0,															//z level
+								 0.4f, 0.5f);												//center
+	//Cooldown* cool = &(_registry->assign<Cooldown>(entity, cooldowns));
+	_registry->assign<Animation>(entity, 5, 0.08, false);
+	_registry->assign<Health>(entity, 5.0f);
+	_registry->assign<Collider>(entity, shipSize / 2);
+	_registry->assign<entt::tag<"Enemy"_hs>>(entity);
 	return entity;
 }
 
@@ -125,11 +145,11 @@ entt::entity AssetManager::createAsteroid(glm::vec2 speedRange, glm::vec2 sizeRa
 	//bool topSpawn = rand() % 2;
 	float x, y;
 	//if (topSpawn) {
-	x = rand() % int(*_gameWidth);
-	//y = -99 + rand() % 2 * (*_gameHeight + 99);
+	x = rand() % int(Global::gameWidth);
+	//y = -99 + rand() % 2 * (Global::gameHeight + 99);
 	//} else {
-		//x = -99 + rand() % 2 * (*_gameWidth + 99);
-	y = rand() % int(*_gameHeight);
+		//x = -99 + rand() % 2 * (Global::gameWidth + 99);
+	y = rand() % int(Global::gameHeight);
 	//}
 	float speed = speedRange.x + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (speedRange.y - speedRange.x)));
 	float size = sizeRange.x + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (sizeRange.y - sizeRange.x)));
@@ -191,10 +211,10 @@ void AssetManager::clearScreen() {
 void AssetManager::createMenu() {
 	auto start = createButton(Event::Type::startGame, "START");
 	auto& startRect = _registry->get<Transform>(start).rect;
-	startRect.x = *_gameWidth / 4 - startRect.w / 2;
-	startRect.y = *_gameHeight / 2 - startRect.h / 2;
+	startRect.x = Global::gameWidth / 4 - startRect.w / 2;
+	startRect.y = Global::gameHeight / 2 - startRect.h / 2;
 	auto quit = createButton(Event::Type::quit, "QUIT");
 	auto& quitRect = _registry->get<Transform>(quit).rect;
-	quitRect.x = *_gameWidth * 3 / 4 - quitRect.w / 2;
-	quitRect.y = *_gameHeight / 2 - quitRect.h / 2;
+	quitRect.x = Global::gameWidth * 3 / 4 - quitRect.w / 2;
+	quitRect.y = Global::gameHeight / 2 - quitRect.h / 2;
 }

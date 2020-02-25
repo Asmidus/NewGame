@@ -3,8 +3,9 @@
 #include "Event.h"
 
 namespace AssetManager {
-	void init(entt::registry* r, glm::vec2& gameDims);
+	void init(entt::registry* r);
 	entt::entity createPlayer();
+	entt::entity createBasicEnemy();
 	entt::entity createBullet(const entt::entity& shooter);
 	entt::entity createAsteroid(glm::vec2 speedRange, glm::vec2 sizeRange);
 	entt::entity createAsteroid(entt::entity* parentAsteroid);

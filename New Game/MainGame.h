@@ -36,9 +36,6 @@ private:
 	Window _window;
 	Program _program;
 	Camera _camera;
-	unsigned int _screenWidth;
-	unsigned int _screenHeight;
-	glm::vec2 _gameDims;
 	GameState _gameState;
 	InputManager _inputManager;
 	FPSLimiter _fpsLimiter;

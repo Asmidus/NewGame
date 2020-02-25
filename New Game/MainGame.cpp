@@ -9,21 +9,31 @@
 #include "Velocity.h"
 #include "Sprite.h"
 #include "TextureManager.h"
+#include "Global.h"
 
 
 
+float Global::screenWidth = 750;
+float Global::screenHeight = 750;
+float Global::gameWidth = 1000;
+float Global::gameHeight = 1000;
 static GLuint texLoc, camLoc;
 
-MainGame::MainGame() : _screenWidth(750), _screenHeight(750), _gameDims(1000, 1000),
+MainGame::MainGame() :
 _gameState(GameState::PLAY), _fpsLimiter(200.0f), _fps(120.0f), _frameTime(0),
-_events(&_registry), _systems(&_registry, &_events, &_inputManager) {}
+_events(&_registry), _systems(&_registry, &_events, &_inputManager) {
+	Global::screenHeight = 750;
+	Global::screenWidth = 750;
+	Global::gameHeight = 1000;
+	Global::gameWidth = 1000;
+}
 
 MainGame::~MainGame() {
 }
 
 void MainGame::run() {
 	initSystems();
-	AssetManager::createMenu();
+	AssetManager::createPlayer();
 	gameLoop();
 }
 
@@ -31,12 +41,12 @@ void MainGame::initSystems() {
 	//Initialize SDL
 	SDL_Init(SDL_INIT_EVERYTHING);
 	TTF_Init();
-	_window.create("ECStroids", _screenWidth, _screenHeight, 0);
-	_systems.init(&_program, &_camera, _gameDims.x, _gameDims.y);
+	_window.create("ECStroids", Global::screenWidth, Global::screenHeight, 0);
+	_systems.init(&_program, &_camera);
 	glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
-	_camera.init(_screenWidth, _screenHeight);
-	_camera.setPosition(_gameDims / 2.0f);
-	_camera.setScale(_screenHeight/_gameDims.y);
+	_camera.init(Global::screenWidth, Global::screenHeight);
+	_camera.setPosition(glm::vec2(Global::gameWidth, Global::gameHeight) / 2.0f);
+	_camera.setScale(Global::screenHeight/Global::gameHeight);
 	//_camera.setScale(10);
 
 	//Shaders
@@ -49,7 +59,7 @@ void MainGame::initSystems() {
 	texLoc = _program.getUniformLocation("mySampler");
 	camLoc = _program.getUniformLocation("P");
 
-	AssetManager::init(&_registry, _gameDims);
+	AssetManager::init(&_registry);
 	_batch.init();
 	srand(time(0));
 }
@@ -71,7 +81,7 @@ void MainGame::gameLoop() {
 		if (_events.processEvents(1 / _fps)) {
 			break;
 		}
-		//_systems.checkCollisions();
+		_systems.checkCollisions();
 		static unsigned int loop = 0;
 		if (loop % 10 == 0) {
 			loop = 1;

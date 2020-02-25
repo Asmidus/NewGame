@@ -11,11 +11,10 @@ class Program;
 class Systems
 {
 public:
-	Systems(entt::registry* registry, EventManager* events, InputManager* inputs) : _registry(registry), _events(events), _inputs(inputs), _camera(nullptr), _program(nullptr), _gameWidth(0), _gameHeight(0) {}
+	Systems(entt::registry* registry, EventManager* events, InputManager* inputs) :
+		_registry(registry), _events(events), _inputs(inputs), _camera(nullptr), _program(nullptr) {}
 	~Systems() {}
-	void init(Program* program, Camera* camera, float screenWidth, float screenHeight) {
-		_gameWidth = screenWidth;
-		_gameHeight = screenHeight;
+	void init(Program* program, Camera* camera) {
 		_program = program;
 		_camera = camera;
 		_lightEngine.LoadShaders();
@@ -30,7 +29,6 @@ public:
 	void spawnAsteroids();
 private:
 	float _dt;
-	float _gameWidth, _gameHeight;
 	entt::registry* _registry;
 	EventManager* _events;
 	InputManager* _inputs;

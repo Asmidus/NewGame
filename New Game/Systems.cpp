@@ -1,5 +1,4 @@
 #include "Systems.h"
-#include "MainGame.h"
 #include "Components.h"
 #include "entt/entt.hpp"
 #include "Sprite.h"
@@ -8,6 +7,7 @@
 #include "SpriteBatch.h"
 #include "Camera.h"
 #include "Program.h"
+#include "Global.h"
 
 #include <iostream>
 #define GLM_ENABLE_EXPERIMENTAL
@@ -148,13 +148,13 @@ void Systems::moveEntities() {
 	_registry->view<Transform>().each(
 		[this](auto& transform) {
 		if (transform.rect.x < -transform.rect.w) {
-			transform.rect.x = _gameWidth;
-		} else if (transform.rect.x > _gameWidth) {
+			transform.rect.x = Global::gameWidth;
+		} else if (transform.rect.x > Global::gameWidth) {
 			transform.rect.x = -transform.rect.w;
 		}
 		if (transform.rect.y < -transform.rect.h) {
-			transform.rect.y = _gameHeight;
-		} else if (transform.rect.y > _gameHeight) {
+			transform.rect.y = Global::gameHeight;
+		} else if (transform.rect.y > Global::gameHeight) {
 			transform.rect.y = -transform.rect.h;
 		}
 	});
@@ -168,7 +168,7 @@ void Systems::checkCollisions() {
 
 	//See if a simple 4-tile quad collision algorithm would be more efficient than brute force
 	if (false) {
-		static const glm::vec2 quadDims[4] = { glm::vec2(0, 0), glm::vec2(_gameWidth / 2, 0), glm::vec2(0, _gameHeight / 2), glm::vec2(_gameWidth / 2, _gameHeight / 2) };
+		static const glm::vec2 quadDims[4] = { glm::vec2(0, 0), glm::vec2(Global::gameWidth / 2, 0), glm::vec2(0, Global::gameHeight / 2), glm::vec2(Global::gameWidth / 2, Global::gameHeight / 2) };
 		static const std::vector<unsigned int> quads = { 0, 1, 2, 3 };
 		auto colliders = _registry->group<Collider>(entt::get<Transform>);
 		std::for_each(std::execution::par_unseq, quads.begin(), quads.end(), [=](auto i) {
@@ -180,19 +180,19 @@ void Systems::checkCollisions() {
 			std::shared_ptr<std::mutex> m2 = std::make_shared<std::mutex>();
 			for (auto& entity : colliders) {
 				auto& transform = _registry->get<Transform>(entity);
-				if (transform.rect.x + transform.rect.w > quadDims[i].x && transform.rect.x < quadDims[i].x + _gameWidth / 2 &&
-					transform.rect.y + transform.rect.h > quadDims[i].y && transform.rect.y < quadDims[i].y + _gameHeight / 2) {
+				if (transform.rect.x + transform.rect.w > quadDims[i].x && transform.rect.x < quadDims[i].x + Global::gameWidth / 2 &&
+					transform.rect.y + transform.rect.h > quadDims[i].y && transform.rect.y < quadDims[i].y + Global::gameHeight / 2) {
 					std::lock_guard<std::mutex> lock{ *m2 };
 					(*test).push_back(&entity);
 				}
 			}
 			for (unsigned int j = 0; j < quadrant.size(); j++) {
 				auto entity1 = quadrant[j];
-				if (_registry->has<entt::tag<"Player"_hs>>(*entity1)) {
+				//if (_registry->has<entt::tag<"Player"_hs>>(*entity1)) {
 					auto [trans1, col1] = _registry->get<Transform, Collider>(*entity1);
 					for (unsigned int k = j+1; k < quadrant.size(); k++) {
 						auto entity2 = quadrant[k];
-						if (_registry->has<entt::tag<"Enemy"_hs>>(*entity2)) {
+						//if (_registry->has<entt::tag<"Enemy"_hs>>(*entity2)) {
 							auto [trans2, col2] = _registry->get<Transform, Collider>(*entity2);
 							if (col1.circular) {
 								glm::vec2 e1Pos = glm::vec2(trans1.center.x * trans1.rect.w + trans1.rect.x,
@@ -209,9 +209,9 @@ void Systems::checkCollisions() {
 									}
 								}
 							}
-						}
+						//}
 					}
-				}
+				//}
 			}
 		});
 	} else {

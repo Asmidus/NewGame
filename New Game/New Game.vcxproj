@@ -156,6 +156,7 @@
     <ClInclude Include="Cooldown.h" />
     <ClInclude Include="Event.h" />
     <ClInclude Include="EventManager.h" />
+    <ClInclude Include="Global.h" />
     <ClInclude Include="Health.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="KeyListener.h" />
