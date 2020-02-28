@@ -8,6 +8,7 @@ struct Event {
 public:
 	enum Type {
 		collision,
+		damage,
 		button,
 		moveUp,
 		moveRight,
@@ -26,4 +27,6 @@ public:
 	Type type;
 	//the position the event was sent from if applicable
 	glm::vec2 mousePos;
+	//other data
+	void* data;
 };

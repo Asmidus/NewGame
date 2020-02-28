@@ -7,7 +7,7 @@
 //This class is responsible for handling and processing events
 class EventManager {
 public:
-	EventManager(entt::registry* registry) : _registry(registry), _dt(0) {}
+	EventManager() : _dt(0) {}
 	~EventManager();
 
 	//Register an event to be processed
@@ -17,6 +17,7 @@ public:
 
 	//These functions each process a specific type of event
 	void processCollision(Event& event);
+	void processDamage(Event& event);
 	void processMove(Event& event);
 	void processShoot(Event& event);
 	void processStartGame(Event& event);
@@ -24,8 +25,6 @@ public:
 private:
 	//The current queue of events to be processed
 	std::vector<Event> _events;
-	//A pointer to the registry
-	entt::registry* _registry;
 	float _dt;
 };
 

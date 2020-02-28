@@ -39,7 +39,6 @@ private:
 	GameState _gameState;
 	InputManager _inputManager;
 	FPSLimiter _fpsLimiter;
-	entt::registry _registry;
 	EventManager _events;
 	Systems _systems;
 	SpriteBatch _batch;

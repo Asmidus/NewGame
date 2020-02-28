@@ -17,23 +17,20 @@ float Global::screenWidth = 750;
 float Global::screenHeight = 750;
 float Global::gameWidth = 1000;
 float Global::gameHeight = 1000;
+entt::registry Global::registry;
+//AABBTree Global::collisionTree(10000);
 static GLuint texLoc, camLoc;
 
 MainGame::MainGame() :
-_gameState(GameState::PLAY), _fpsLimiter(200.0f), _fps(120.0f), _frameTime(0),
-_events(&_registry), _systems(&_registry, &_events, &_inputManager) {
-	Global::screenHeight = 750;
-	Global::screenWidth = 750;
-	Global::gameHeight = 1000;
-	Global::gameWidth = 1000;
-}
+_gameState(GameState::PLAY), _fpsLimiter(60.0f), _fps(120.0f), _frameTime(0),
+_events(), _systems(&_events, &_inputManager) {}
 
 MainGame::~MainGame() {
 }
 
 void MainGame::run() {
 	initSystems();
-	AssetManager::createPlayer();
+	AssetManager::createMenu();
 	gameLoop();
 }
 
@@ -59,7 +56,6 @@ void MainGame::initSystems() {
 	texLoc = _program.getUniformLocation("mySampler");
 	camLoc = _program.getUniformLocation("P");
 
-	AssetManager::init(&_registry);
 	_batch.init();
 	srand(time(0));
 }
@@ -85,10 +81,10 @@ void MainGame::gameLoop() {
 		static unsigned int loop = 0;
 		if (loop % 10 == 0) {
 			loop = 1;
-			int asteroids = _registry.view<entt::tag<"Enemy"_hs>>().size();
-			int bullets = _registry.view<entt::tag<"Player"_hs>>().size();
+			int asteroids = Global::registry.view<entt::tag<"Enemy"_hs>>().size();
+			int bullets = Global::registry.view<Sprite>().size();
 			SDL_SetWindowTitle(_window.get(), std::string("ECStroids - FPS: " + std::to_string(_fps) + " Asteroids: " + std::to_string(asteroids) + " Bullets: " + std::to_string(bullets)).c_str());
-			//std::cout << _fps << " with " << _registry.view<entt::tag<"Player"_hs>>().size() << " and " << _registry.view<entt::tag<"Enemy"_hs>>().size() << "\n";
+			//std::cout << _fps << " with " << Global::registry.view<entt::tag<"Player"_hs>>().size() << " and " << Global::registry.view<entt::tag<"Enemy"_hs>>().size() << "\n";
 		} else {
 			loop++;
 		}

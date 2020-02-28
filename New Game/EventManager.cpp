@@ -2,6 +2,7 @@
 #include "Components.h"
 #include "AssetManager.h"
 #include "entt/entt.hpp"
+#include "Global.h"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/vector_angle.hpp>
@@ -45,97 +46,84 @@ int EventManager::processEvents(float dt) {
 
 void EventManager::processCollision(Event& event) {
 	entt::entity p, e;
-	//for (int i = 0; i < event.entities.size(); i++) {
-	//	entt::entity collided = event.entities.at(i);
-	//	if (!_registry->valid(collided)) {
-	//		return;
-	//	}
-	//	auto& collider = _registry->get<Collider>(collided);
-	//	auto health = _registry->try_get<Health>(collided);
-	//	if (!_registry->has<entt::tag<"Player"_hs>>(collided)) {
-	//		//if (_registry->has<entt::tag<"Split"_hs>>(collided)) {
-	//		//	for (int i = 0; i < rand() % 2 + 2; i++) {
-	//		//		AssetManager::createAsteroid(&collided);
-	//		//	}
-	//		//}
-	//		e = collided;
-	//		auto& velocity = _registry->get<Velocity>(collided);
-	//		//velocity.currVel *= -1;
-	//		//velocity.direction *= -1;
-	//		//_registry->destroy(collided);
-	//	} else {
-	//		p = collided;
-	//		if (health) {
-	//			//health->current -= 1.0f;
-	//			if (health->current > 0) {
-	//				auto& sprite = _registry->get<Sprite>(collided);
-	//				sprite.color = { 255, GLubyte(255 * health->current / health->max), GLubyte(255 * health->current / health->max), 255 };
-	//				continue;
-	//			}
-	//			AssetManager::clearScreen();
-	//			AssetManager::createMenu();
-	//			return;
-	//		}
-	//		//_registry->destroy(collided);
-	//	}
-	//}
 	p = event.entities[0];
 	e = event.entities[1];
-	if (!_registry->valid(p) || !_registry->valid(e)) {
+	if (!Global::registry.valid(p) || !Global::registry.valid(e)) {
 		return;
 	}
-	if (_registry->has<entt::tag<"Player"_hs>>(e)) {
+	if (Global::registry.has<entt::tag<"Player"_hs>>(e)) {
 		auto n = p;
 		p = e;
 		e = n;
 	}
-	auto& v1 = _registry->get<Velocity>(p);
-	auto& v2 = _registry->get<Velocity>(e);
-	auto& t1 = _registry->get<Transform>(p);
-	auto& t2 = _registry->get<Transform>(e);
-	auto& c1 = _registry->get<Collider>(p);
-	auto& c2 = _registry->get<Collider>(e);
-	glm::vec2 e1Pos = glm::vec2(t1.center.x * t1.rect.w + t1.rect.x,
-								t1.center.y * t1.rect.h + t1.rect.y);
-	glm::vec2 e2Pos = glm::vec2(t2.center.x * t2.rect.w + t2.rect.x,
-								t2.center.y * t2.rect.h + t2.rect.y);
+	auto [pv, pt, pc] = Global::registry.get<Velocity, Transform, Collider>(p);
+	auto [ev, et, ec] = Global::registry.get<Velocity, Transform, Collider>(e);
+	auto ph = Global::registry.try_get<Health>(p);
+	auto pCool = Global::registry.try_get<Cooldown>(p);
+	auto eh = Global::registry.try_get<Health>(e);
+	auto eCool = Global::registry.try_get<Cooldown>(e);
+	glm::vec2 e1Pos = glm::vec2(pt.center.x * pt.rect.w + pt.rect.x,
+								pt.center.y * pt.rect.h + pt.rect.y);
+	glm::vec2 e2Pos = glm::vec2(et.center.x * et.rect.w + et.rect.x,
+								et.center.y * et.rect.h + et.rect.y);
 	auto dir = e1Pos - e2Pos;
 	if (e1Pos == e2Pos) {
 		dir = glm::vec2(rand()%200-100, rand()%200-100);
 	}
-	auto speed = glm::length(v2.currVel);
-	float depth = c1.radius + c2.radius - glm::length(dir);
+	auto speed = glm::length(ev.currVel);
+	float depth = pc.radius + ec.radius - glm::length(dir);
 	if (e1Pos == e2Pos) {
 		depth += 1;
 	}
 	glm::vec2 displace = glm::normalize(dir) * depth;
-	v2.currVel = -glm::normalize(dir) * speed;
-	if (!_registry->has<Health>(p)) {
-		v1.currVel = glm::normalize(dir) * glm::length(v1.currVel);
-		t2.rect.x -= displace.x/2;
-		t2.rect.y -= displace.y/2;
-		t1.rect.x += displace.x/2;
-		t1.rect.y += displace.y/2;
+	//ev.currVel = -glm::normalize(dir) * speed;
+	float pFactor;
+	float eFactor;
+	float totalMass = pc.mass + ec.mass;
+	if (pc.mass == 0 && ec.mass == 0) {
+		pFactor = eFactor = 2;
+	} else if (pc.mass == 0) {
+		pFactor = 0.00001;
+		eFactor = 0.99999;
+	} else if (ec.mass == 0) {
+		pFactor = 0.99999;
+		eFactor = 0.00001;
+	} else if (pc.mass == INT_MAX) {
+		pFactor = 1;
+		eFactor = 0;
+	} else if (ec.mass == INT_MAX) {
+		pFactor = 0;
+		eFactor = 1;
 	} else {
-		t2.rect.x -= displace.x;
-		t2.rect.y -= displace.y;
+		pFactor = pc.mass / totalMass;
+		eFactor = ec.mass / totalMass;
 	}
-	//if (_registry->has<entt::tag<"Player"_hs>>(p) && !_registry->has<entt::tag<"Player"_hs>>(e)) {
-	//	if (_registry->has<entt::tag<"Split"_hs>>(e)) {
-	//		for (int i = 0; i < rand() % 2 + 2; i++) {
-	//			AssetManager::createAsteroid(&e);
-	//		}
-	//	}
-	//	_registry->destroy(e);
-	//}
+	float force = glm::length(pv.currVel) + glm::length(ev.currVel);
+	//pv.currVel = glm::normalize(pv.currVel - 2 * glm::dot(pv.currVel, glm::normalize(dir)) * glm::normalize(dir)) * force * (1 - pFactor);
+	//ev.currVel = glm::normalize(ev.currVel - 2 * glm::dot(ev.currVel, glm::normalize(dir)) * glm::normalize(dir)) * force * (1 - eFactor);
+	pv.currVel += glm::normalize(dir) * force * (1 - pFactor);
+	ev.currVel -= glm::normalize(dir) * force * (1 - eFactor);
+	et.rect.x -= displace.x * (1 - eFactor);
+	et.rect.y -= displace.y * (1 - eFactor);
+	pt.rect.x += displace.x * (1 - pFactor);
+	pt.rect.y += displace.y * (1 - pFactor);
+
+	if (Global::registry.has<entt::tag<"Player"_hs>>(p) && Global::registry.has<entt::tag<"Enemy"_hs>>(e)) {
+		if (eh && (!eCool || eCool->trigger(Event::Type::damage))) {
+			eh->current -= 1;
+		}
+		if (ph && (!pCool || pCool->trigger(Event::Type::damage))) {
+			ph->current -= 1;
+		}
+	}
 }
 
 void EventManager::processMove(Event& event) {
 	for (auto entity : event.entities) {
-		auto& entityVel = _registry->get<Velocity>(entity);
-		auto animation = _registry->try_get<Animation>(entity);
+		auto& entityVel = Global::registry.get<Velocity>(entity);
+		auto animation = Global::registry.try_get<Animation>(entity);
 		auto& direction = entityVel.direction;
-		auto& transform = _registry->get<Transform>(entity);
+		auto& transform = Global::registry.get<Transform>(entity);
 		switch (event.type) {
 		case Event::moveUp:
 			if (animation) {
@@ -159,7 +147,7 @@ void EventManager::processShoot(Event& event) {
 
 void EventManager::processStartGame(Event& event) {
 	if (!event.entities.empty()) {
-		auto rect = _registry->get<Transform>(event.entities[0]).rect;
+		auto rect = Global::registry.get<Transform>(event.entities[0]).rect;
 		auto pos = event.mousePos;
 		if (pos.x < rect.x || pos.x > rect.x + rect.w ||
 			pos.y < rect.y || pos.y > rect.y + rect.h) {
@@ -173,7 +161,7 @@ void EventManager::processStartGame(Event& event) {
 
 int EventManager::processQuit(Event& event) {
 	if (!event.entities.empty()) {
-		auto rect = _registry->get<Transform>(event.entities[0]).rect;
+		auto rect = Global::registry.get<Transform>(event.entities[0]).rect;
 		auto pos = event.mousePos;
 		if (pos.x < rect.x || pos.x > rect.x + rect.w ||
 			pos.y < rect.y || pos.y > rect.y + rect.h) {

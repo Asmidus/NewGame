@@ -1,4 +1,6 @@
 #pragma once
+#include "entt/entt.hpp"
+//#include "AABBTree.h"
 
 class Global {
 public:
@@ -6,4 +8,6 @@ public:
 	static float screenHeight;
 	static float gameWidth;
 	static float gameHeight;
+	static entt::registry registry;
+	//static AABBTree collisionTree;
 };
