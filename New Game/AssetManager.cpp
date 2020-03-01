@@ -111,21 +111,26 @@ entt::entity AssetManager::createBasicEnemy() {
 entt::entity AssetManager::createBullet(const entt::entity& shooter) {
 	auto entity = Global::registry.create();
 	auto shooterTransform = Global::registry.get<Transform>(shooter);
-	static float bulletSize = 12.5;
+	static float bulletSize = 50;
 	glm::vec2 point = glm::vec2(shooterTransform.rect.w, shooterTransform.rect.h/2);
 	float angle = shooterTransform.angle;
 	auto center = shooterTransform.center * glm::vec2(shooterTransform.rect.w, shooterTransform.rect.h);
 	float rotatedX = cos(angle) * (point.x - center.x) - sin(angle) * (point.y - center.y) + center.x + shooterTransform.rect.x - bulletSize/2;
 	float rotatedY = sin(angle) * (point.x - center.x) + cos(angle) * (point.y - center.y) + center.y + shooterTransform.rect.y - bulletSize/2;
-	Global::registry.assign<Velocity>(entity, glm::vec2(1, 0), 5.0f);
+	if (Global::registry.size() > 5) {
+		Global::registry.assign<Velocity>(entity, glm::vec2(1, 0), 0.0f);
+	} else {
+		Global::registry.assign<Velocity>(entity, glm::vec2(-1, 0), 2.0f);
+	}
+	Global::registry.get<Velocity>(entity).maxSpeed = 3;
 	Global::registry.assign<Transform>(entity, rotatedX, rotatedY, bulletSize, bulletSize, 1);
 	float r = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
 	float g = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
 	float b = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
 	Global::registry.assign<Sprite>(entity, "media/Projectile.png", 50, 50, glm::vec3(255*r, 255*g, 255*b));
 	Global::registry.assign<Lifetime>(entity, 5);
-	Global::registry.assign<Collider>(entity, bulletSize/2, 0.2);
-	Global::registry.assign<Health>(entity, 1);
+	Global::registry.assign<Collider>(entity, bulletSize/2, 1);
+	//Global::registry.assign<Health>(entity, 1);
 	//Global::collisionTree.insertObject(entity);
 	//Global::registry.assign<entt::tag<"Bright"_hs>>(entity);
 	//float size = 1000 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2000 - 1000.0f)));

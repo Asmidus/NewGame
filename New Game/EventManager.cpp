@@ -66,7 +66,7 @@ void EventManager::processCollision(Event& event) {
 								pt.center.y * pt.rect.h + pt.rect.y);
 	glm::vec2 e2Pos = glm::vec2(et.center.x * et.rect.w + et.rect.x,
 								et.center.y * et.rect.h + et.rect.y);
-	auto dir = e1Pos - e2Pos;
+	auto dir = e2Pos - e1Pos;
 	if (e1Pos == e2Pos) {
 		dir = glm::vec2(rand()%200-100, rand()%200-100);
 	}
@@ -75,38 +75,49 @@ void EventManager::processCollision(Event& event) {
 	if (e1Pos == e2Pos) {
 		depth += 1;
 	}
-	glm::vec2 displace = glm::normalize(dir) * depth;
+	glm::vec2 displace = glm::normalize(dir) * depth * 1.0f;
 	//ev.currVel = -glm::normalize(dir) * speed;
 	float pFactor;
 	float eFactor;
 	float totalMass = pc.mass + ec.mass;
-	if (pc.mass == 0 && ec.mass == 0) {
-		pFactor = eFactor = 2;
-	} else if (pc.mass == 0) {
-		pFactor = 0.00001;
-		eFactor = 0.99999;
-	} else if (ec.mass == 0) {
-		pFactor = 0.99999;
-		eFactor = 0.00001;
-	} else if (pc.mass == INT_MAX) {
+	pFactor = pc.mass / totalMass;
+	eFactor = ec.mass / totalMass;
+	if (pc.mass == INT_MAX) {
 		pFactor = 1;
 		eFactor = 0;
 	} else if (ec.mass == INT_MAX) {
 		pFactor = 0;
 		eFactor = 1;
-	} else {
-		pFactor = pc.mass / totalMass;
-		eFactor = ec.mass / totalMass;
 	}
-	float force = glm::length(pv.currVel) + glm::length(ev.currVel);
-	//pv.currVel = glm::normalize(pv.currVel - 2 * glm::dot(pv.currVel, glm::normalize(dir)) * glm::normalize(dir)) * force * (1 - pFactor);
-	//ev.currVel = glm::normalize(ev.currVel - 2 * glm::dot(ev.currVel, glm::normalize(dir)) * glm::normalize(dir)) * force * (1 - eFactor);
-	pv.currVel += glm::normalize(dir) * force * (1 - pFactor);
-	ev.currVel -= glm::normalize(dir) * force * (1 - eFactor);
-	et.rect.x -= displace.x * (1 - eFactor);
-	et.rect.y -= displace.y * (1 - eFactor);
-	pt.rect.x += displace.x * (1 - pFactor);
-	pt.rect.y += displace.y * (1 - pFactor);
+	et.rect.x += displace.x * (1 - eFactor);
+	et.rect.y += displace.y * (1 - eFactor);
+	pt.rect.x -= displace.x * (1 - pFactor);
+	pt.rect.y -= displace.y * (1 - pFactor);
+
+	double ratio = ec.mass / pc.mass;
+	auto vel = ev.currVel - pv.currVel;
+
+	double vx_cm = (pc.mass * e1Pos.x + ec.mass * e2Pos.x) / (ec.mass + pc.mass);
+	double vy_cm = (pc.mass * e1Pos.y + ec.mass * e2Pos.y) / (ec.mass + pc.mass);
+	if ((vel.x * dir.x + vel.y * dir.y) >= 0) return;
+	double fy = 1.0e-12 * fabs(dir.y);
+	int sign;
+	if (fabs(dir.x) < fy) {
+		if (dir.x < 0) { sign = -1; } else { sign = 1; }
+		dir.x = fy * sign;
+	}
+	double a = dir.y / dir.x;
+	double dv = -2 * (vel.x + a * vel.y) / ((1 + a * a) * (1 + ratio));
+	ev.currVel.x += dv * (1 - eFactor);
+	ev.currVel.y += a * dv * (1 - eFactor);
+	pv.currVel.x -= ratio * dv * (1 - pFactor);
+	pv.currVel.y -= a * ratio * dv * (1 - pFactor);
+	//if (glm::length(ev.currVel) != 0) {
+	//	ev.direction = glm::normalize(ev.currVel);
+	//}
+	//if (glm::length(pv.currVel) != 0) {
+	//	pv.direction = glm::normalize(pv.currVel);
+	//}
 
 	if (Global::registry.has<entt::tag<"Player"_hs>>(p) && Global::registry.has<entt::tag<"Enemy"_hs>>(e)) {
 		if (eh && (!eCool || eCool->trigger(Event::Type::damage))) {

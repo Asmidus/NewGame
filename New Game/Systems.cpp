@@ -146,19 +146,19 @@ void Systems::moveEntities() {
 		//update the transform of the entity
 		transform.updatePos(velocity.currVel * 120.0f * _dt);
 	});
-	Global::registry.view<Transform>().each(
-		[this](auto& transform) {
-		if (transform.rect.x < -transform.rect.w) {
-			transform.rect.x = Global::gameWidth;
-		} else if (transform.rect.x > Global::gameWidth) {
-			transform.rect.x = -transform.rect.w;
-		}
-		if (transform.rect.y < -transform.rect.h) {
-			transform.rect.y = Global::gameHeight;
-		} else if (transform.rect.y > Global::gameHeight) {
-			transform.rect.y = -transform.rect.h;
-		}
-	});
+	//Global::registry.view<Transform>().each(
+	//	[this](auto& transform) {
+	//	if (transform.rect.x < -transform.rect.w) {
+	//		transform.rect.x = Global::gameWidth;
+	//	} else if (transform.rect.x > Global::gameWidth) {
+	//		transform.rect.x = -transform.rect.w;
+	//	}
+	//	if (transform.rect.y < -transform.rect.h) {
+	//		transform.rect.y = Global::gameHeight;
+	//	} else if (transform.rect.y > Global::gameHeight) {
+	//		transform.rect.y = -transform.rect.h;
+	//	}
+	//});
 }
 
 void Systems::checkCollisions() {
@@ -237,23 +237,41 @@ void Systems::checkCollisions() {
 		//	}
 		//});
 	//} else {
-		group.each([=](auto& entity1, auto tag, auto& trans1, auto& col1) {
-			std::for_each(std::execution::par_unseq, enemies.begin(), enemies.end(), [=](auto entity2) {
-				if (entity1 != entity2) {
-					auto [trans2, col2] = enemies.get<Transform, Collider>(entity2);
-					glm::vec2 e1Pos = glm::vec2(trans1.center.x * trans1.rect.w + trans1.rect.x,
-												trans1.center.y * trans1.rect.h + trans1.rect.y);
-					glm::vec2 e2Pos = glm::vec2(trans2.center.x * trans2.rect.w + trans2.rect.x,
-												trans2.center.y * trans2.rect.h + trans2.rect.y);
-					if (glm::length(e1Pos - e2Pos) < col1.radius + col2.radius) {
-						//auto cooldowns1 = Global::registry.try_get<Cooldown>(entity1);
-						//auto cooldowns2 = Global::registry.try_get<Cooldown>(entity2);
-						std::lock_guard<std::mutex> lock{ *m };
-						_events->registerEvent(Event(Event::Type::collision, { entity1, entity2 }));
-					}
-				}
-			});
-		});
+	for (unsigned int i = 0; i < all.size(); ++i) {
+		entt::entity entity1 = all[i];
+		auto [trans1, col1] = all.get<Transform, Collider>(entity1);
+		for (unsigned int j = i + 1; j < all.size(); ++j) {
+			entt::entity entity2 = all[j];
+			auto [trans2, col2] = all.get<Transform, Collider>(entity2);
+			glm::vec2 e1Pos = glm::vec2(trans1.center.x * trans1.rect.w + trans1.rect.x,
+										trans1.center.y * trans1.rect.h + trans1.rect.y);
+			glm::vec2 e2Pos = glm::vec2(trans2.center.x * trans2.rect.w + trans2.rect.x,
+										trans2.center.y * trans2.rect.h + trans2.rect.y);
+			if (glm::length(e1Pos - e2Pos) < col1.radius + col2.radius) {
+				//auto cooldowns1 = Global::registry.try_get<Cooldown>(entity1);
+				//auto cooldowns2 = Global::registry.try_get<Cooldown>(entity2);
+				std::lock_guard<std::mutex> lock{ *m };
+				_events->registerEvent(Event(Event::Type::collision, { entity1, entity2 }));
+			}
+		}
+	}
+		//all.each([=](auto& entity1,/* auto tag,*/ auto& col1, auto& trans1) {
+		//	std::for_each(std::execution::par_unseq, all.begin(), all.end(), [=](auto entity2) {
+		//		if (entity1 != entity2) {
+		//			auto [trans2, col2] = all.get<Transform, Collider>(entity2);
+		//			glm::vec2 e1Pos = glm::vec2(trans1.center.x * trans1.rect.w + trans1.rect.x,
+		//										trans1.center.y * trans1.rect.h + trans1.rect.y);
+		//			glm::vec2 e2Pos = glm::vec2(trans2.center.x * trans2.rect.w + trans2.rect.x,
+		//										trans2.center.y * trans2.rect.h + trans2.rect.y);
+		//			if (glm::length(e1Pos - e2Pos) < col1.radius + col2.radius) {
+		//				//auto cooldowns1 = Global::registry.try_get<Cooldown>(entity1);
+		//				//auto cooldowns2 = Global::registry.try_get<Cooldown>(entity2);
+		//				std::lock_guard<std::mutex> lock{ *m };
+		//				_events->registerEvent(Event(Event::Type::collision, { entity1, entity2 }));
+		//			}
+		//		}
+		//	});
+		//});
 	//}
 }
 

@@ -3,7 +3,6 @@
 #include "Event.h"
 
 namespace AssetManager {
-	void init(entt::registry* r);
 	entt::entity createPlayer();
 	entt::entity createBasicEnemy();
 	entt::entity createBullet(const entt::entity& shooter);

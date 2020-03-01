@@ -30,7 +30,7 @@ MainGame::~MainGame() {
 
 void MainGame::run() {
 	initSystems();
-	AssetManager::createMenu();
+	AssetManager::createPlayer();
 	gameLoop();
 }
 
